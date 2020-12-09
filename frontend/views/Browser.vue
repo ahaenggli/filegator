@@ -108,7 +108,11 @@
               {{ props.row.time ? formatDate(props.row.time) : '' }}
             </b-table-column>
 
-            <b-table-column id="single-actions" width="51">
+            <b-table-column :visible="showUser" :label="lang('User')" :custom-sort="sortByUser" field="data.user" sortable width="50">
+             {{ props.row.user }}
+            </b-table-column>
+
+            <b-table-column id="single-actions" width="111">
               <b-dropdown v-if="props.row.type != 'back'" :disabled="checked.length > 0" aria-role="list" position="is-bottom-left">
                 <button :ref="'ref-single-action-button-'+props.row.path" slot="trigger" class="button is-small">
                   <b-icon icon="ellipsis-h" size="is-small" />
@@ -142,7 +146,18 @@
                   <b-icon icon="clipboard" size="is-small" /> {{ lang('Copy link') }}
                 </b-dropdown-item>
               </b-dropdown>
+
+
+
+                  <button class="button is-small" @click="Share($event, props.row)" v-if="props.row.type != 'back' && can('write') && can('download') && can('read')" >
+                    <b-icon icon="link" size="is-small" />
+                </button>
+
+               <button class="button is-small" @click="UnShare($event, props.row)" v-if="props.row.share && props.row.type != 'back' && can('write') && can('download') && can('read')">
+                    <b-icon icon="unlink" size="is-small" />
+                </button>
             </b-table-column>
+
           </template>
 
           <template slot="bottom-left">
@@ -175,6 +190,7 @@ export default {
   data() {
     return {
       dropZone: false,
+      showUser: false,
       perPage: '',
       currentPage: 1,
       checked: [],
@@ -199,6 +215,8 @@ export default {
       return _.filter(breadcrumbs, o => o.name)
     },
     content() {
+      this.showUser = false
+      this.$store.state.cwd.content.forEach(element =>{ if(element.user != null) this.showUser = true })
       return this.$store.state.cwd.content
     },
     totalCount() {
@@ -526,6 +544,60 @@ export default {
         }
       })
     },
+
+      UnShare(event, item) {
+
+          this.isLoading = true
+          api.unshareItems({
+            items: item ? [item] : this.getSelected(),
+          })
+            .then(data => {
+              this.isLoading = false
+              this.loadFiles()
+
+              this.$dialog.alert({
+                message: this.lang('Share beendet.'),
+                type: 'is-danger',
+                confirmText: this.lang('OK')
+              })
+
+            })
+            .catch(error => {
+              this.isLoading = false
+              this.handleError(error)
+            })
+          this.checked = []
+
+
+    },
+    Share(event, item) {
+          this.isLoading = true
+          api.shareItems({
+            items: item ? [item] : this.getSelected(),
+          })
+            .then(data => {
+              this.isLoading = false
+              this.loadFiles()
+
+              if(item.type == 'file') data =  window.location.origin+window.location.pathname+'?download='+data
+              else if(item.type == 'dir') data =  window.location.origin+window.location.pathname+'?uploadlink='+data
+              else data = null
+              if(data != null){
+              this.$copyText(data)
+              this.$dialog.alert({
+                message: data,
+                type: 'is-danger',
+                confirmText: this.lang('OK')
+              })
+              }
+            })
+            .catch(error => {
+              this.isLoading = false
+              this.handleError(error)
+            })
+          this.checked = []
+    },
+
     sortByName(a, b, order) {
       return this.customSort(a, b, !order, 'name')
     },
@@ -534,6 +606,9 @@ export default {
     },
     sortByTime(a, b, order) {
       return this.customSort(a, b, !order, 'time')
+    },
+    sortByUser(a, b, order) {
+      return this.customSort(a, b, !order, 'user')
     },
     customSort(a, b, order, param) {
       if (a.type == 'back') return -1

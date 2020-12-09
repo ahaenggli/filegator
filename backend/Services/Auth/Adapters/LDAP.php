@@ -32,6 +32,9 @@ class LDAP implements Service, AuthInterface
     protected $ldap_filter;
     protected $ldap_userFieldMapping;
 
+    protected $TokenDB;
+    protected $RepoPath;
+
     public function __construct(Session $session)
     {
         $this->session = $session;
@@ -39,6 +42,10 @@ class LDAP implements Service, AuthInterface
 
     public function init(array $config = [])
     {
+        if(!empty($config['TokenDB']))
+          @$this->TokenDB = new \SQLite3($config['TokenDB']);
+          @$this->RepoPath =$config['RepoPath'];
+
         if(!isset($config['ldap_server']) || empty($config['ldap_server']))
             throw new \Exception('config ldap_server missing');
 
@@ -63,6 +70,8 @@ class LDAP implements Service, AuthInterface
 
     public function user(): ?User
     {
+        if(isset($_GET['uploadlink'])) return null;
+        if(isset($_GET['download']))   return null;
         return $this->session ? $this->session->get(self::SESSION_KEY, null) : null;
     }
 
@@ -117,6 +126,38 @@ class LDAP implements Service, AuthInterface
         return null;
     }
 
+
+
+    function uploadlinks($key){
+        $db = $this->TokenDB;
+        $array = [];
+        $stmt = $db->prepare('select * from links where type="u" and key= :pfad;');
+        $stmt->bindValue(':pfad', $key, \SQLITE3_TEXT);
+        $ret = $stmt->execute();
+
+        while($row = $ret->fetchArray(SQLITE3_ASSOC) ) {
+           if(is_dir($row['value']) && file_exists($row['value'])) $array[$row['key']] = $row['value'];
+           else remove_uploadlink($row['key']);
+        }
+
+        return $array;
+    }
+
+    function downloadlinks($key){
+        $db = $this->TokenDB;
+        $array = [];
+        $stmt = $db->prepare('select * from links where type="d" and key= :pfad;');
+        $stmt->bindValue(':pfad', $key, \SQLITE3_TEXT);
+        $ret = $stmt->execute();
+
+        while($row = $ret->fetchArray(SQLITE3_ASSOC) ) {
+           if(is_file($row['value']) && file_exists($row['value'])) $array[$row['key']] = $row['value'];
+           else remove_downloadlink($row['key']);
+        }
+
+        return $array;
+      }
+
     public function getGuest(): User
     {
         $guest = $this->find(self::GUEST_USERNAME);
@@ -127,7 +168,40 @@ class LDAP implements Service, AuthInterface
             $guest->setName('Guest');
             $guest->setRole('guest');
             $guest->setHomedir('/');
-            $guest->setPermissions([]);
+            $guest->setPermissions(['']);
+
+            if(isset($_GET['download']) && !empty($_GET['download'])){
+                $download = $this->downloadlinks($_GET['download']);
+                if(!empty($download))
+                {
+                    $guest->setPermissions(['download']);
+                    $key = array_keys($download)[0];
+                    $val = array_values($download)[0];
+                    $val = base64_encode(str_replace(@$this->RepoPath, '', $val));
+
+                    if(!isset($_GET['path']))
+                    {
+                       $http = 'http';
+                       if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') $http.='s';
+                       $url = $http.'://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'].'&path='.$val.'&r=/download';
+                       header('LOCATION: '.$url);
+                       die();
+                    }
+                }
+            }
+
+            if(isset($_GET['uploadlink']) && !empty($_GET['uploadlink'])){
+                $uploadlink = $this->uploadlinks($_GET['uploadlink']);
+                if(!empty($uploadlink))
+                {
+                    $key = array_keys($uploadlink)[0];
+                    $val = array_values($uploadlink)[0];
+                    $val = str_replace(@$this->RepoPath, '', $val);
+                    $guest->setHomedir($val);
+                    $guest->setPermissions(['read', 'write', 'upload']);
+                }
+            }
+
             return $guest;
         }
 

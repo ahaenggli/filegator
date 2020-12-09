@@ -23,7 +23,7 @@ class DirectoryCollection implements \JsonSerializable
         $this->location = $location;
     }
 
-    public function addFile(string $type, string $path, string $name, int $size, int $timestamp)
+    public function addFile(string $type, string $path, string $name, int $size, int $timestamp, string $user = null, string $share = null)
     {
         if (! in_array($type, ['dir', 'file', 'back'])) {
             throw new \Exception('Invalid file type.');
@@ -35,6 +35,8 @@ class DirectoryCollection implements \JsonSerializable
             'name' => $name,
             'size' => $size,
             'time' => $timestamp,
+            'user' => $user,
+            'share' => $share
         ]);
     }
 

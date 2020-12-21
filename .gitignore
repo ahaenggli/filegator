@@ -4,6 +4,10 @@
 /dist/js
 /dist/main.html
 
+/dist/img/*.svg
+/private/*.sqlite
+package-lock.json
+
 /configuration.php
 
 /tests/backend/coverage

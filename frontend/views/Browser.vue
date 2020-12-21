@@ -660,7 +660,6 @@ export default {
 }
 .file-row a {
   color: #373737;
-  word-break: break-all;
 }
 .file-row a.name {
   word-break: break-all;

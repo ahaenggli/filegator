@@ -1,11 +1,13 @@
 <?php
 
 /*
- * This file is part of the FileGator package.
+ * This file is NOT (yet) part of the FileGator package.
  *
  * (c) Milos Stojanovic <alcalbg@gmail.com>
+ * some additions by Adriano Hänggli <https://github.com/ahaenggli>
  *
  * For the full copyright and license information, please view the LICENSE file
+ *
  */
 
 namespace Filegator\Services\Storage;
@@ -13,20 +15,24 @@ namespace Filegator\Services\Storage;
 use Filegator\Services\Service;
 use League\Flysystem\Filesystem as Flysystem;
 use League\Flysystem\Util;
+use Filegator\Services\Auth\AuthInterface as AuthInterface;
 
-class Filesystemwithuser extends Filesystem
+class FilesystemWithUser extends Filesystem
 {
     protected $separator;
-
     protected $storage;
-
     protected $path_prefix;
 
     protected $user;
     protected $FileDB;
     protected $TokenDB;
-
     protected $ShowFileUserOrOwner = false;
+
+
+    public function __construct(AuthInterface $auth)
+    {
+        $this->user = $auth->user() ?: $auth->getGuest();
+    }
 
     public function init(array $config = [])
     {
@@ -49,8 +55,8 @@ class Filesystemwithuser extends Filesystem
                 );
             EOF;
             $ret = $this->FileDB->exec($sql);
-            $auth = $config['container']->get('Filegator\Services\Auth\AuthInterface');
-            $this->user = $auth->user() ?: $auth->getGuest();
+
+            ;
         }
 
         if($this->ShowFileUserOrOwner && !empty($config['TokenDB']))
@@ -385,11 +391,9 @@ function uploadlinks($key=null){
         $name = $this->getBaseName($key);
         $destination = $this->joinPaths($this->storage->getAdapter()->getPathPrefix(), $this->applyPathPrefix($userpath), $name);
 
-        $value = $this->user->getUsername();
-
         $stmt = $this->FileDB->prepare('INSERT INTO pfadbesitzer (pfad,besitzer)  VALUES (:key, :val); ');
         $stmt->bindValue(':key', $destination,    \SQLITE3_TEXT);
-        $stmt->bindValue(':val', $value,  \SQLITE3_TEXT);
+        $stmt->bindValue(':val', $this->user->getUsername(),  \SQLITE3_TEXT);
         $result = $stmt->execute();
     }
 

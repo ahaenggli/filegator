@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item logo" @click="$router.push('/').catch(() => {})">
+      <a class="navbar-item logo" @click="home">
         <img :src="this.$store.state.config.logo">
       </a>
 
@@ -69,8 +69,13 @@ export default {
           this.handleError(error)
         })
     },
+    home() {
+      //this.$router.push('/login').catch(() => {})
+      window.location = window.location.origin + '/#/'
+    },
     login() {
-      this.$router.push('/login').catch(() => {})
+      //this.$router.push('/login').catch(() => {})
+      window.location = window.location.origin + '/#/login'
     },
     profile() {
       this.$modal.open({

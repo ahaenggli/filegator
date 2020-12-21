@@ -30,8 +30,7 @@ class App
 
         foreach ($config->get('services', []) as $key => $service) {
             $container->set($key, $container->get($service['handler']));
-            if(isset($service['config'])) $service['config']['container'] = $container;
-            $container->get($key)->init(isset($service['config']) ? $service['config'] : ['container'=>$container]);
+            $container->get($key)->init(isset($service['config']) ? $service['config'] : []);
         }
 
         $response->send();

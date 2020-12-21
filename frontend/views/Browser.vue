@@ -660,6 +660,7 @@ export default {
 }
 .file-row a {
   color: #373737;
+  word-break: break-all;
 }
 .file-row.type-dir a.name {
   font-weight: bold

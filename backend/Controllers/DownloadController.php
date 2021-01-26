@@ -69,6 +69,7 @@ class DownloadController
         $extension = pathinfo($file['filename'], PATHINFO_EXTENSION);
         $mimes = (new MimeTypes())->getMimeTypes($extension);
         $contentType = !empty($mimes) ? $mimes[0] : 'application/octet-stream';
+        $filesize    = $file['size'];
 
         $disposition = HeaderUtils::DISPOSITION_ATTACHMENT;
 
@@ -90,6 +91,11 @@ class DownloadController
         $streamedResponse->headers->set(
             'Content-Transfer-Encoding',
             'binary'
+        );
+
+        $streamedResponse->headers->set(
+            'Content-Length',
+            $filesize
         );
 
         // @codeCoverageIgnoreStart

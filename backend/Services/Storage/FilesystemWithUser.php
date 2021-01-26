@@ -184,6 +184,7 @@ class FilesystemWithUser extends Filesystem
         return [
             'filename' => $this->getBaseName($path),
             'stream' => $this->storage->readStream($path),
+            'size'   => $this->storage->getSize($path),
         ];
     }
 

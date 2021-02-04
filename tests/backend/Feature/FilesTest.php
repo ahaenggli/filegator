@@ -155,6 +155,7 @@ class FilesTest extends TestCase
 
         mkdir(TEST_REPOSITORY.'/john');
         touch(TEST_REPOSITORY.'/john/john.txt', $this->timestamp);
+        file_put_contents(TEST_REPOSITORY.'/john/john.txt', '123456');
         touch(TEST_REPOSITORY.'/john/image.jpg', $this->timestamp);
         touch(TEST_REPOSITORY.'/john/vector.svg', $this->timestamp);
         touch(TEST_REPOSITORY.'/john/inlinedoc.pdf', $this->timestamp);
@@ -162,33 +163,35 @@ class FilesTest extends TestCase
         $path_encoded = base64_encode('john.txt');
         $this->sendRequest('GET', '/download&path='.$path_encoded);
         $headers = $this->streamedResponse->headers;
-        $this->assertEquals($headers->get('content-disposition'), "attachment; filename=file; filename*=utf-8''john.txt");
-        $this->assertEquals($headers->get('content-type'), 'text/plain');
-        $this->assertEquals($headers->get('content-transfer-encoding'), 'binary');
+        $this->assertEquals("attachment; filename=file; filename*=utf-8''john.txt", $headers->get('content-disposition'));
+        $this->assertEquals('text/plain', $headers->get('content-type'));
+        $this->assertEquals('binary', $headers->get('content-transfer-encoding'));
+        $this->assertEquals(6, $headers->get('content-length'));
         $this->assertOk();
 
         $path_encoded = base64_encode('image.jpg');
         $this->sendRequest('GET', '/download&path='.$path_encoded);
         $headers = $this->streamedResponse->headers;
-        $this->assertEquals($headers->get('content-disposition'), "attachment; filename=file; filename*=utf-8''image.jpg");
-        $this->assertEquals($headers->get('content-type'), 'image/jpeg');
-        $this->assertEquals($headers->get('content-transfer-encoding'), 'binary');
+        $this->assertEquals("attachment; filename=file; filename*=utf-8''image.jpg", $headers->get('content-disposition'));
+        $this->assertEquals('image/jpeg', $headers->get('content-type'));
+        $this->assertEquals('binary', $headers->get('content-transfer-encoding'));
+        $this->assertEquals(0, $headers->get('content-length'));
         $this->assertOk();
 
         $path_encoded = base64_encode('vector.svg');
         $this->sendRequest('GET', '/download&path='.$path_encoded);
         $headers = $this->streamedResponse->headers;
-        $this->assertEquals($headers->get('content-disposition'), "attachment; filename=file; filename*=utf-8''vector.svg");
-        $this->assertEquals($headers->get('content-type'), 'image/svg+xml');
-        $this->assertEquals($headers->get('content-transfer-encoding'), 'binary');
+        $this->assertEquals("attachment; filename=file; filename*=utf-8''vector.svg", $headers->get('content-disposition'));
+        $this->assertEquals('image/svg+xml', $headers->get('content-type'));
+        $this->assertEquals('binary', $headers->get('content-transfer-encoding'));
         $this->assertOk();
 
         $path_encoded = base64_encode('inlinedoc.pdf');
         $this->sendRequest('GET', '/download&path='.$path_encoded);
         $headers = $this->streamedResponse->headers;
-        $this->assertEquals($headers->get('content-disposition'), "inline; filename=file; filename*=utf-8''inlinedoc.pdf");
-        $this->assertEquals($headers->get('content-type'), 'application/pdf');
-        $this->assertEquals($headers->get('content-transfer-encoding'), 'binary');
+        $this->assertEquals("inline; filename=file; filename*=utf-8''inlinedoc.pdf", $headers->get('content-disposition'));
+        $this->assertEquals('application/pdf', $headers->get('content-type'));
+        $this->assertEquals('binary', $headers->get('content-transfer-encoding'));
         $this->assertOk();
     }
 
@@ -204,9 +207,10 @@ class FilesTest extends TestCase
         $this->sendRequest('GET', '/download&path='.$path_encoded);
 
         $headers = $this->streamedResponse->headers;
-        $this->assertEquals($headers->get('content-disposition'), "inline; filename=file; filename*=utf-8''john.pdf");
-        $this->assertEquals($headers->get('content-type'), 'application/pdf');
-        $this->assertEquals($headers->get('content-transfer-encoding'), 'binary');
+        $this->assertEquals("inline; filename=file; filename*=utf-8''john.pdf", $headers->get('content-disposition'));
+        $this->assertEquals('application/pdf', $headers->get('content-type'));
+        $this->assertEquals('binary', $headers->get('content-transfer-encoding'));
+        $this->assertEquals(0, $headers->get('content-length'));
 
         $this->assertOk();
     }
@@ -634,6 +638,14 @@ class FilesTest extends TestCase
         ]);
 
         $this->assertOk();
+
+        // test headers
+        $this->response->getContent();
+        $headers = $this->streamedResponse->headers;
+        $this->assertEquals('application/octet-stream', $headers->get('content-type'));
+        $this->assertEquals('attachment; filename=archive.zip', $headers->get('content-disposition'));
+        $this->assertEquals('binary', $headers->get('content-transfer-encoding'));
+        $this->assertEquals(414, $headers->get('content-length'));
     }
 
     public function testUpdateFileContent()
@@ -653,7 +665,7 @@ class FilesTest extends TestCase
 
         $updated = file_get_contents(TEST_REPOSITORY.'/john/john.txt');
 
-        $this->assertEquals($updated, 'lorem ipsum new');
+        $this->assertEquals('lorem ipsum new', $updated);
     }
 
     public function testUpdateFileContentInSubDir()
@@ -678,6 +690,6 @@ class FilesTest extends TestCase
 
         $updated = file_get_contents(TEST_REPOSITORY.'/john/sub/john.txt');
 
-        $this->assertEquals($updated, 'lorem ipsum new');
+        $this->assertEquals('lorem ipsum new', $updated);
     }
 }

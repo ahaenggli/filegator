@@ -155,6 +155,37 @@ class FileController
         return $response->json('Done');
     }
 
+    public function shareItems(Request $request, Response $response)
+    {
+        $items = $request->input('items', []);
+        $r = "";
+        foreach ($items as $item) {
+            if ($item->type == 'dir') {
+                $r.=$this->storage->shareItem('dir', $item->path);
+            }
+            if ($item->type == 'file') {
+                $r.=$this->storage->shareItem('file', $item->path);
+            }
+        }
+
+        return $response->json($r);
+    }
+    public function unshareItems(Request $request, Response $response)
+    {
+        $items = $request->input('items', []);
+        $r = "";
+        foreach ($items as $item) {
+            if ($item->type == 'dir') {
+                $r.=$this->storage->unshareItem('dir', $item->share);
+            }
+            if ($item->type == 'file') {
+                $r.=$this->storage->unshareItem('file', $item->share);
+            }
+        }
+
+        return $response->json($r);
+    }
+
     public function deleteItems(Request $request, Response $response)
     {
         $items = $request->input('items', []);

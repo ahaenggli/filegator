@@ -138,6 +138,32 @@ return [
             'read', 'write', 'zip',
         ],
     ],
+
+
+    [
+        'route' => [
+            'POST', '/shareitems', '\Filegator\Controllers\FileController@shareItems',
+        ],
+        'roles' => [
+            'user', 'admin',
+        ],
+        'permissions' => [
+            'read', 'write',
+        ],
+    ],
+    [
+        'route' => [
+            'POST', '/unshareitems', '\Filegator\Controllers\FileController@unshareItems',
+        ],
+        'roles' => [
+            'user', 'admin',
+        ],
+        'permissions' => [
+            'read', 'write',
+        ],
+    ],
+
+
     [
         'route' => [
             'POST', '/deleteitems', '\Filegator\Controllers\FileController@deleteItems',

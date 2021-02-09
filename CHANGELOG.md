@@ -2,7 +2,10 @@
 
 ## Upcoming...
 
+## 7.5.0 - 2021-02-05
+
 * Show filesize and remaining time on download #181 (Thanks @ahaenggli)
+* Min supported PHP version is now 7.2
 
 ## 7.4.7 - 2021-01-13
 

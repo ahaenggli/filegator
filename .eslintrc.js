@@ -24,5 +24,10 @@ module.exports = {
       'single'
     ],
     'no-trailing-spaces': 1,
+  },
+  env: {
+    node: true,
+    browser: true,
+    es6: true,
   }
 }

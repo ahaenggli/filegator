@@ -231,11 +231,12 @@ class LDAP implements Service, AuthInterface
     {
         if(!isset($this->ldap_server) || empty($this->ldap_server)) return false;
         if(!extension_loaded('ldap')) return false;
-
-        if($connect=ldap_connect($this->ldap_server))
+        $connect = @ldap_connect($this->ldap_server);
+        if($connect)
         {
          ldap_set_option($connect, LDAP_OPT_PROTOCOL_VERSION, 3);
-         if($bind=ldap_bind($connect, $auth_user, $password)){
+         $bind = @ldap_bind($connect, $auth_user, $password);
+         if($bind){
             @ldap_close($connect);
             return true;
         } else {

@@ -15,7 +15,18 @@ import '@fortawesome/fontawesome-free/css/fontawesome.css'
 Vue.config.productionTip = false
 
 /* eslint-disable-next-line */
-Vue.config.baseURL = process.env.VUE_APP_API_ENDPOINT ? process.env.VUE_APP_API_ENDPOINT : window.location.origin+window.location.pathname+'?r='
+//Vue.config.baseURL = process.env.VUE_APP_API_ENDPOINT ? process.env.VUE_APP_API_ENDPOINT : window.location.origin+window.location.pathname+'?r='
+
+let uploadlink = new URLSearchParams(window.location.search).get('uploadlink')
+if(uploadlink != undefined && uploadlink != null) uploadlink = 'uploadlink='+uploadlink+'&'
+else uploadlink = ''
+
+let downloadtoken = new URLSearchParams(window.location.search).get('download')
+if(downloadtoken != undefined && downloadtoken != null) downloadtoken = 'download='+downloadtoken+'&'
+else downloadtoken = ''
+
+Vue.config.baseURL = process.env.VUE_APP_API_ENDPOINT ? process.env.VUE_APP_API_ENDPOINT : window.location.origin+window.location.pathname+'?'+uploadlink+downloadtoken+'r='
+
 
 axios.defaults.withCredentials = true
 axios.defaults.baseURL = Vue.config.baseURL

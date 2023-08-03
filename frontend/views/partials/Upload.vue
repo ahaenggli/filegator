@@ -8,10 +8,10 @@
               <a @click="toggleWindow">
                 <b-icon :icon="progressVisible ? 'angle-down' : 'angle-up'" />
               </a>
-              <span v-if="activeUploads && resumable.progress()*100 == 100">
+              <span v-if="activeUploads && Math.round(resumable.progress()*100) == 100">
                 {{ lang('Uploading files', '(concat/copy) '+99.99, formatBytes(resumable.getSize())) }}
               </span>
-              <span v-if="activeUploads && resumable.progress()*100 < 100">
+              <span v-if="activeUploads && Math.round(resumable.progress()*100) < 100">
                 {{ lang('Uploading files', resumable.getSize() > 0 ? Math.round(resumable.progress()*100) : 100, formatBytes(resumable.getSize())) }}
               </span>
               <span v-if="activeUploads && paused">

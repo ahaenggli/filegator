@@ -157,14 +157,16 @@ class FilesystemWithUser extends Filesystem
 
     public function deleteDir(string $path)
     {
+        $deli = $this->storage->deleteDir($this->applyPathPrefix($path));
         $this->removeUser($path);
-        return $this->storage->deleteDir($this->applyPathPrefix($path));
+        return $deli; 
     }
 
     public function deleteFile(string $path)
     {
+        $deli = $this->storage->delete($this->applyPathPrefix($path));
         $this->removeUser($path);
-        return $this->storage->delete($this->applyPathPrefix($path));
+        return $deli;
     }
 
     public function readStream(string $path): array

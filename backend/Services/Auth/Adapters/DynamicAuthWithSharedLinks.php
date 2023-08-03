@@ -43,12 +43,12 @@ class DynamicAuthWithSharedLinks implements Service, AuthInterface
             throw new \Exception('config ldap_server missing');
 
         if(!empty($config['FileDB']))
-            @$this->FileDB = new \SQLite3($config['FileDB']);
+            $this->FileDB = new \SQLite3($config['FileDB']);
 
         if(!empty($config['anonymous_name']))
             $this->anonymous_name = $config['anonymous_name'];
 
-        @$this->RepoPath =$config['RepoPath'];
+        $this->RepoPath =$config['RepoPath'];
 
         $key = 'DynamicAuthWithSharedLinks';
 
@@ -111,7 +111,7 @@ class DynamicAuthWithSharedLinks implements Service, AuthInterface
                     $guest->setPermissions(['download']);
                     $key = array_keys($download)[0];
                     $val = array_values($download)[0];
-                    $val = base64_encode(str_replace(@$this->RepoPath, '', $val));
+                    $val = base64_encode(str_replace($this->RepoPath, '', $val));
 
                     if(!isset($_GET['path']))
                     {
@@ -130,7 +130,7 @@ class DynamicAuthWithSharedLinks implements Service, AuthInterface
                 {
                     $key = array_keys($uploadlink)[0];
                     $val = array_values($uploadlink)[0];
-                    $val = str_replace(@$this->RepoPath, '', $val);
+                    $val = str_replace($this->RepoPath, '', $val);
                     $guest->setHomedir($val);
                     $guest->setPermissions(['read', 'write', 'upload']);
                 }

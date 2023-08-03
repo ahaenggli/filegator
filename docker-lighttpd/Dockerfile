@@ -84,11 +84,20 @@ RUN sed -i 's/^max_file_uploads = .*/max_file_uploads = 100/' $PHP_INI_DIR/php.i
 RUN sed -i 's/^memory_limit = .*/memory_limit = 1512M/' $PHP_INI_DIR/php.ini
 RUN sed -i 's/^post_max_size = .*/post_max_size = 1500M/' $PHP_INI_DIR/php.ini
 RUN sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 1500M/' $PHP_INI_DIR/php.ini
-
+RUN sed -i 's/^max_execution_time = .*/max_execution_time = 3600/' $PHP_INI_DIR/php.ini
+RUN sed -i 's/^max_input_time = .*/max_input_time = 300/' $PHP_INI_DIR/php.ini
 #RUN mkdir /var/run/lighttpd
 #RUN touch /var/run/lighttpd/php-fastcgi.socket
 #RUN chown -R lighttpd:lighttpd /var/run/lighttpd
 
+RUN set -eux; \
+    { \
+        echo '[www]'; \
+        echo 'pm.max_children = 10'; \
+        echo 'pm.start_servers = 4'; \
+        echo 'pm.min_spare_servers = 2'; \
+        echo 'pm.max_spare_servers = 6'; \
+    } | tee "/usr/local/etc/php-fpm.d/zzz-pm.conf"
 
 #ADD 15-fastcgi-php.conf /etc/lighttpd/conf-available/15-fastcgi-php.conf
 COPY --from=npmbuild /app/filegator /var/www/filegator

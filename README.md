@@ -143,7 +143,7 @@ Testing requires xdebug, php-zip and sqlite php extensions.
 vendor/bin/phpunit
 vendor/bin/phpstan analyse ./backend
 npm run lint
-npm run test:e2e
+npm run e2e
 ```
 
 

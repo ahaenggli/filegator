@@ -13,7 +13,6 @@ namespace Filegator\Services\Storage;
 use Filegator\Utils\Collection;
 
 class DirectoryCollectionWithUser extends DirectoryCollection implements \JsonSerializable
-//class DirectoryCollectionWithUser implements \JsonSerializable
 {
     use Collection;
 
@@ -24,9 +23,9 @@ class DirectoryCollectionWithUser extends DirectoryCollection implements \JsonSe
         $this->location = $location;
     }
 
-    public function addFile(string $type, string $path, string $name, int $size, int $timestamp, string $user = null, string $share = null)
+    public function addFile(string $type, string $path, string $name, int $size, int $timestamp, int $permissions = -1, string $user = null, string $share = null)
     {
-        if (! in_array($type, ['dir', 'file', 'back'])) {
+        if (!in_array($type, ['dir', 'file', 'back'])) {
             throw new \Exception('Invalid file type.');
         }
 
@@ -36,6 +35,7 @@ class DirectoryCollectionWithUser extends DirectoryCollection implements \JsonSe
             'name' => $name,
             'size' => $size,
             'time' => $timestamp,
+            'permissions' => $permissions,
             'user' => $user,
             'share' => $share,
         ]);

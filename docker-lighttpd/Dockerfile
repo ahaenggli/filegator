@@ -1,4 +1,4 @@
-FROM php:7-apache-buster as composerbuild
+FROM php:8-apache-buster AS composerbuild
 RUN mkdir -p /var/www
 WORKDIR /var/www
 
@@ -17,7 +17,7 @@ WORKDIR /var/www/filegator
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN composer install --ignore-platform-reqs
 
-FROM node:14-buster as npmbuild
+FROM node:14-buster AS npmbuild
 RUN mkdir -p /app/filegator
 WORKDIR /app/filegator
 
@@ -29,10 +29,13 @@ RUN apt-get install -y curl git wget unzip zip
 RUN npm install
 RUN npm update  & npm audit fix
 
+RUN apt-get install -y dos2unix 
+
+
+
 # COPY ./filegator/frontend /app/filegator/frontend
 # COPY ./filegator/.eslintrc.js /app/filegator/.eslintrc.js
 
-RUN apt-get install -y dos2unix 
 RUN find . -type f -name '*.vue' -exec dos2unix {} +
 RUN find . -type f -name '*.js' -exec dos2unix {} +
 # RUN find . -type f -name '*.js'  -exec sed -i 's/\r\n$/\n$/' {} +

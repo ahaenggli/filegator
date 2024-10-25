@@ -1,7 +1,7 @@
 #################################
 # stage builder: build and test
 #################################
-FROM php:7-apache-buster AS builder
+FROM php:8.3-apache-bullseye AS builder
 
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 
@@ -23,14 +23,14 @@ RUN npm install
 RUN npm run build
 RUN vendor/bin/phpunit
 RUN npm run lint
-#RUN npm run e2e
+#RUN npm run test:e2e
 RUN rm -rf node_modules frontend tests docs .git .github
 RUN rm README.md couscous.yml repository/.gitignore babel.config.js cypress* .env* .eslint* .gitignore jest.* .php_cs* phpunit* postcss* vue*
 
 #################################
 # stage production
 #################################
-FROM php:7-apache-buster
+FROM php:8.3-apache-bullseye
 
 RUN apt-get update > /dev/null
 RUN apt-get install -y git libzip-dev libldap2-dev

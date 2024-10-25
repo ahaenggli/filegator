@@ -2,6 +2,17 @@
 currentMenu: development
 ---
 
+## Project setup for development (Docker)
+
+```
+git clone https://github.com/filegator/filegator.git
+cd filegator
+docker compose -f docker-compose-dev.yml up
+```
+Once everything is ready visit: [http://localhost:8080](http://localhost:8080) and login as admin/admin123, Ctrl+c to stop.
+
+See `docker-compose-dev.yml` for more informations about configurations and dependencies.
+
 ## Project setup for development (Linux)
 
 You must have `git`, `php`, `npm`, and `composer` installed.
@@ -34,7 +45,7 @@ Testing requires xdebug, php-zip and sqlite php extensions.
 vendor/bin/phpunit
 vendor/bin/phpstan analyse ./backend
 npm run lint
-npm run e2e
+npm run test:e2e
 ```
 
 ## Deployment

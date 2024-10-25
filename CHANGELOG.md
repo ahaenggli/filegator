@@ -2,6 +2,17 @@
 
 ## Upcoming...
 
+## 7.10.1 - 2024-04-24
+* Update docker container from php7-apache-buster to php8.3-apache-bullseye
+* Dependency updates for PHP
+
+## 7.10.0 - 2024-04-17
+* Added chmod perm, modal to change, api with local/ftp/sftp (see #399, thanks AndreiTelteu)
+
+## 7.9.3 - 2023-10-13
+* Removed is_writable check for ../repository folder, fixes (see #423)
+* Make gallary images clickable (see #411)
+
 ## 7.9.2 - 2023-01-25
 * Docker update, container port changed from 80 to 8080 (see #376)
 

@@ -21,11 +21,6 @@ if (! is_writable(__DIR__.'/../private/logs/')) {
     die;
 }
 
-if (! is_writable(__DIR__.'/../repository/')) {
-    echo 'Folder not writable: /repository/'."\n";
-    die;
-}
-
 if (! file_exists(__DIR__.'/../configuration.php')) {
     copy(__DIR__.'/../configuration_sample.php', __DIR__.'/../configuration.php');
 }
@@ -41,7 +36,7 @@ if (! defined('APP_PUBLIC_PATH')) {
 }
 
 define('APP_PUBLIC_DIR', __DIR__);
-define('APP_VERSION', '7.9.2');
+define('APP_VERSION', '7.10.1');
 
 use Filegator\App;
 use Filegator\Config\Config;

@@ -56,9 +56,6 @@
             <b-checkbox v-model="permissions.zip">
               {{ lang('Zip') }}
             </b-checkbox>
-            <b-checkbox v-model="permissions.chmod">
-              {{ lang('Chmod') }}
-            </b-checkbox>
           </div>
         </b-field>
       </form>
@@ -99,7 +96,6 @@ export default {
         download: _.find(this.user.permissions, p => p == 'download') ? true : false,
         batchdownload: _.find(this.user.permissions, p => p == 'batchdownload') ? true : false,
         zip: _.find(this.user.permissions, p => p == 'zip') ? true : false,
-        chmod: _.find(this.user.permissions, p => p == 'chmod') ? true : false,
       }
     }
   },
@@ -111,7 +107,6 @@ export default {
         this.permissions.write = false
         this.permissions.batchdownload = false
         this.permissions.zip = false
-        this.permissions.chmod = false
       }
     },
     'permissions.write' (val) {
@@ -119,7 +114,6 @@ export default {
         this.permissions.read = true
       } else {
         this.permissions.zip = false
-        this.permissions.chmod = false
       }
     },
     'permissions.download' (val) {
@@ -134,12 +128,6 @@ export default {
       }
     },
     'permissions.zip' (val) {
-      if (val) {
-        this.permissions.read = true
-        this.permissions.write = true
-      }
-    },
-    'permissions.chmod' (val) {
       if (val) {
         this.permissions.read = true
         this.permissions.write = true

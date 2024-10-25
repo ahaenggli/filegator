@@ -218,7 +218,7 @@ class LDAP implements Service, AuthInterface
                 // ...but not for admins
                 if ($user['role'] == 'admin'){
                     $user['homedir']   = '/';
-                    $user['permissions'] = 'read|write|upload|download|batchdownload|zip|chmod';
+                    $user['permissions'] = 'read|write|upload|download|batchdownload|zip';
                 }
 
                 if(is_array($user) && !empty($user)) $users[] = $user;

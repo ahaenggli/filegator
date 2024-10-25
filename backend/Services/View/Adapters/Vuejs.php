@@ -17,8 +17,6 @@ use Filegator\Services\View\ViewInterface;
 class Vuejs implements Service, ViewInterface
 {
     private $config;
-    private $add_to_head = '';
-    private $add_to_body = '';
 
     public function __construct(Config $config)
     {

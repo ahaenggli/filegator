@@ -48,11 +48,6 @@ FileGator is a free, open-source project. It's an independent project with its o
           <img title="VanillaVoice - Turn any Text into Human-Sounding Speech" width="200px" src="https://www.vanillavoice.com/logo.svg">
         </a>
       </td>
-      <td align="center" valign="middle">
-        <a href="https://www.savepage.io/?utm_campaign=Sponsored%20GitHub%20FileGator" target="_blank">
-          <img title="Screenshot any website with our powerful API" width="200px" src="https://www.savepage.io/images/logo.svg">
-        </a>
-      </td>
     </tr>
   </tbody>
 </table>
@@ -93,7 +88,7 @@ This is read-only demo with guest account enabled
 
 ## Limitations
 - Symlinks are not supported by the underlying [Flysystem](https://flysystem.thephpleague.com/v1/docs/adapter/local/)
-- File permission operations are not supported (chmod/chown)
+- File ownership is not supported (chown)
 
 ## Docker
 Check out [the official docker image](https://hub.docker.com/r/filegator/filegator) with instructions on how to use it
@@ -104,17 +99,20 @@ docker run -p 8080:8080 -d filegator/filegator
 visit: http://127.0.0.1:8080 login as admin/admin123
 ```
 
-## Minimum Requirements
-- PHP 7.2.5+ (with php-zip extension)
-
-See [install instructions](https://docs.filegator.io/install.html) for Ubuntu 18.04 or Debian 10.3. Get $100 in ([server credits here](https://m.do.co/c/93994ebda78d)) so you can play around.
+## Download & Installation
+See [install instructions](https://docs.filegator.io/install.html). Get $100 in ([server credits here](https://m.do.co/c/93994ebda78d)) so you can play around.
 
 
-## Download precompiled build
-Precompiled build is created for non-developers. In this version, the frontend (html, css and javascript) is compiled for you and the source code is removed so the final archive contains only minimum files.
+## Project setup for development (Docker)
 
-[Download & install instructions](https://docs.filegator.io/install.html)
+```
+git clone https://github.com/filegator/filegator.git
+cd filegator
+docker compose -f docker-compose-dev.yml up
+```
+Once everything is ready visit: [http://localhost:8080](http://localhost:8080) and login as admin/admin123, Ctrl+c to stop.
 
+See `docker-compose-dev.yml` for more informations about configurations and dependencies.
 
 ## Project setup for development (Linux)
 
@@ -129,17 +127,9 @@ chmod -R 775 repository/
 composer install --ignore-platform-reqs
 npm install
 npm run build
-```
-
-
-## Compiles and hot-reloads
-
-The following command will launch backend and frontend on ports 8081 and 8080:
-
-```
 npm run serve
 ```
-Once everything is ready visit: `http://localhost:8080`
+Once everything is ready visit: [http://localhost:8080](http://localhost:8080) and login as admin/admin123
 
 
 ## Run tests & static analysis
@@ -150,7 +140,7 @@ Testing requires xdebug, php-zip and sqlite php extensions.
 vendor/bin/phpunit
 vendor/bin/phpstan analyse ./backend
 npm run lint
-npm run e2e
+npm run test:e2e
 ```
 
 

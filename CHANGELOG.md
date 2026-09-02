@@ -2,6 +2,66 @@
 
 ## Upcoming...
 
+## 7.15.1 - 2026-08-13
+* LDAP security fix (https://github.com/filegator/filegator/security/advisories/GHSA-h3qf-hr78-8c64)
+* nosniff headers added to protect inline downloads
+
+## 7.15.0 - 2026-08-13
+* Security fix: batch download archives are now bound to the session that created them, reported by Yulio Valdes (https://github.com/Yunnn-Yulio).
+* Security fix: uploads can no longer reach another user's temporary files via the chunk filename, reported by Yulio Valdes (https://github.com/Yunnn-Yulio).
+* Fix unreadable .box text in dark theme, thanks @TowyTowy (see #589)
+* Add Danish translation (see #590)
+* Open the folder itself when selecting a folder search result (see #591 by @TowyTowy)
+
+## 7.14.3 - 2026-05-22
+* Added upload speed metric to the bottom pane, thanks @NikhilC2209 (see #581)
+* Unhandled exceptions logged to stdout and shown as generic internal server errors
+* Better Dockerfile.dev for local development - install dependencies and run as non-root
+
+## 7.14.2 - 2026-05-18
+* Security fix: validate permission bits when using chmod, reported by Abdul Moiz (https://github.com/moizxsec).
+
+## 7.14.1 - 2026-05-18
+* Fixed broken guest upload (see #583)
+
+## 7.14.0 - 2026-04-18
+* Reworked bottom pane for file uploads by @NikhilC2209 (see #580)
+
+## 7.13.5 - 2026-04-13
+* Security fix, see #579, thanks @NikhilC2209 for reporting
+
+## 7.13.4 - 2026-03-03
+* Session fixation fixed by regenerating session on login
+
+## 7.13.3 - 2026-01-19
+* Update Dockerfile to use node 22
+
+## 7.13.2 - 2026-01-19
+* Fix cicd pipeline, use ubuntu-22 for ci-dockerhub build
+
+## 7.13.1 - 2026-01-19
+* Prevent deletion of guest user in deleteUser method
+
+## 7.13.0 - 2024-02-25
+* Added a column to display chmod permissions (see #522)
+* Extract app theme SCSS to external files (see #524)
+* Configurable pagination (see #533)
+* Fix lazy loading images all being loaded when opening gallery (see #534)
+
+## 7.12.0 - 2024-12-13
+* Dependency updates (see #506)
+* Min PHP version set to 8.1
+* Added support for NodeJS up to v22
+* Dark theme added using prefers-color-scheme (see #499)
+* Automatic multiarch docker deployment after release (amd64, arm7/8, 386)
+
+## 7.11.1 - 2024-11-27
+* Ukrainian translations added, thanks @jekasumy @jaapmarcus
+
+## 7.11.0 - 2024-10-28
+* Improved LDAP adapter, thanks @ahaenggli
+* Fix file permissions, thanks @yahesh
+
 ## 7.10.1 - 2024-04-24
 * Update docker container from php7-apache-buster to php8.3-apache-bullseye
 * Dependency updates for PHP

@@ -43,9 +43,11 @@ class UploadController
     {
         $file_name = $request->input('resumableFilename', 'file');
         $identifier = (string) preg_replace('/[^0-9a-zA-Z_]/', '', (string) $request->input('resumableIdentifier'));
+        $username = $this->auth->user() ? $this->auth->user()->getUsername() : 'guest';
+        $clean_username = (string) preg_replace('/[^0-9a-zA-Z_]/', '', $username);
         $chunk_number = (int) $request->input('resumableChunkNumber');
 
-        $chunk_file = 'multipart_'.$identifier.$file_name.'.part'.$chunk_number;
+        $chunk_file = 'multipart_'.$clean_username.'_'.$identifier.'_'.$file_name.'.part'.$chunk_number;
 
         if ($this->tmpfs->exists($chunk_file)) {
             return $response->json('Chunk exists', 200);
@@ -62,6 +64,8 @@ class UploadController
         $total_chunks = (int) $request->input('resumableTotalChunks');
         $total_size = (int) $request->input('resumableTotalSize');
         $identifier = (string) preg_replace('/[^0-9a-zA-Z_]/', '', (string) $request->input('resumableIdentifier'));
+        $username = $this->auth->user() ? $this->auth->user()->getUsername() : 'guest';
+        $clean_username = (string) preg_replace('/[^0-9a-zA-Z_]/', '', $username);
 
         $filebag = $request->files;
         $file = $filebag->get('file');
@@ -81,7 +85,7 @@ class UploadController
             return $response->json('Bad file', 422);
         }
 
-        $prefix = 'multipart_'.$identifier;
+        $prefix = 'multipart_'.$clean_username.'_'.$identifier.'_';
 
         if ($this->tmpfs->exists($prefix.'_error')) {
             return $response->json('Chunk too big', 422);
@@ -109,16 +113,26 @@ class UploadController
 
         // if all the chunks are present, create final file and store it
         if ($chunks_size >= $total_size) {
+            // Assemble the chunks into a temporary file kept inside this request's
+            // own namespace ($prefix already encodes the user), so the assembly can
+            // never read, write or delete another user's temporary files.
+            $assembled = $prefix.$file_name;
+
             for ($i = 1; $i <= $total_chunks; ++$i) {
                 $part = $this->tmpfs->readStream($prefix.$file_name.'.part'.$i);
-                $this->tmpfs->write($file_name, $part['stream'], true);
+                $this->tmpfs->write($assembled, $part['stream'], true);
             }
 
-            $final = $this->tmpfs->readStream($file_name);
-            $res = $this->storage->store($destination, $final['filename'], $final['stream'], $overwrite_on_upload);
+            $res = false;
+            if ($this->tmpfs->exists($assembled)) {
+                $final = $this->tmpfs->readStream($assembled);
+                // the stored name is the sanitized file name without the prefix
+                $name = substr($final['filename'], strlen($prefix));
+                $res = $this->storage->store($destination, $name, $final['stream'], $overwrite_on_upload);
+                $this->tmpfs->remove($assembled);
+            }
 
             // cleanup
-            $this->tmpfs->remove($file_name);
             foreach ($this->tmpfs->findAll($prefix.'*') as $expired_chunk) {
                 $this->tmpfs->remove($expired_chunk['name']);
             }

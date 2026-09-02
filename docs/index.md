@@ -28,7 +28,6 @@ File upload supports drag&drop, progress bar, pause and resume. Upload is chunke
 - Zip and bulk download support
 - Highly extensible, decoupled and tested code
 - No database required
-- Framework free [™](https://www.youtube.com/watch?v=L5jI9I03q8E)
 
 ## Demo
 [https://demo.filegator.io](https://demo.filegator.io)
@@ -43,13 +42,14 @@ Check out [the official docker image](https://hub.docker.com/r/filegator/filegat
 
 Docker quick start:
 ```
-docker run -p 8080:8080 -d filegator/filegator
+docker run --rm -p 8080:8080 filegator/filegator
 visit: http://127.0.0.1:8080 login as admin/admin123
 ```
 
 ## Limitations
 - Symlinks are not supported by the underlying [Flysystem](https://flysystem.thephpleague.com/v1/docs/adapter/local/)
 - File ownership is not supported (chown)
+- Too many files in the same directory can negatively impact performance
 
 ## Why Open Source on GitHub?
 

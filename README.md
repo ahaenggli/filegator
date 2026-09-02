@@ -44,8 +44,13 @@ FileGator is a free, open-source project. It's an independent project with its o
         </a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://www.vanillavoice.com/?utm_campaign=Sponsored%20GitHub%20FileGator" target="_blank">
-          <img title="VanillaVoice - Turn any Text into Human-Sounding Speech" width="200px" src="https://www.vanillavoice.com/logo.svg">
+        <a href="https://correctme.app/?utm_campaign=Sponsored%20GitHub%20FileGator" target="_blank">
+          <img title="Free Online Grammar and Spell Checker" width="177px" src="https://correctme.app/logo.png">
+        </a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://interactive32.com/?utm_campaign=Sponsored%20GitHub%20FileGator" target="_blank">
+          <img title="Modern approach to software development" width="177px" src="https://interactive32.com/images/logo.png">
         </a>
       </td>
     </tr>
@@ -84,18 +89,18 @@ This is read-only demo with guest account enabled
 - Zip and bulk download support
 - Highly extensible, decoupled and tested code
 - No database required
-- Framework free [™](https://www.youtube.com/watch?v=L5jI9I03q8E)
 
 ## Limitations
 - Symlinks are not supported by the underlying [Flysystem](https://flysystem.thephpleague.com/v1/docs/adapter/local/)
 - File ownership is not supported (chown)
+- Too many files in the same directory can negatively impact performance
 
 ## Docker
 Check out [the official docker image](https://hub.docker.com/r/filegator/filegator) with instructions on how to use it
 
 Docker quick start:
 ```
-docker run -p 8080:8080 -d filegator/filegator
+docker run --rm -p 8080:8080 filegator/filegator
 visit: http://127.0.0.1:8080 login as admin/admin123
 ```
 
@@ -116,7 +121,7 @@ See `docker-compose-dev.yml` for more informations about configurations and depe
 
 ## Project setup for development (Linux)
 
-You must have `git`, `php`, `npm`, and `composer` installed.
+You must have `git`, `php`, `node (v14)`, `npm`, and `composer` installed.
 
 ```
 git clone https://github.com/filegator/filegator.git
@@ -140,7 +145,6 @@ Testing requires xdebug, php-zip and sqlite php extensions.
 vendor/bin/phpunit
 vendor/bin/phpstan analyse ./backend
 npm run lint
-npm run test:e2e
 ```
 
 
@@ -156,7 +160,9 @@ Please ⭐️ this repository if this project helped you!
 
 ## Security
 
-If you discover any security related issues, please email alcalbg@gmail.com instead of using the issue tracker.
+If you discover a security vulnerability, please report it privately via GitHub Security Advisories instead of using the public issue tracker:
+
+https://github.com/filegator/filegator/security/advisories
 
 ## License
 

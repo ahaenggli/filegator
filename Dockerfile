@@ -3,7 +3,7 @@
 #################################
 FROM php:8.3-apache-bullseye AS builder
 
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_22.x | bash -
 
 RUN apt-get update > /dev/null
 RUN apt-get install -y git libzip-dev nodejs python2 libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
@@ -36,7 +36,7 @@ RUN apt-get update > /dev/null
 RUN apt-get install -y git libzip-dev libldap2-dev
 
 RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
-RUN docker-php-ext-install zip ldap
+RUN docker-php-ext-install zip ldap mysqli
 RUN docker-php-ext-enable zip ldap
 
 COPY --from=builder /var/www/filegator /var/www/filegator

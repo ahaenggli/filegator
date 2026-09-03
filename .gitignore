@@ -30,3 +30,5 @@ tags
 *.njsproj
 *.sln
 *.sw*
+.phpactor/
+.phpactor.json

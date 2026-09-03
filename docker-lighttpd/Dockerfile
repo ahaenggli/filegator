@@ -1,10 +1,21 @@
-FROM php:8-apache-buster AS composerbuild
+FROM php:8.3-apache-bullseye AS builder
+
 RUN mkdir -p /var/www
 WORKDIR /var/www
 
+
 # Install git
+RUN curl -sL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get update > /dev/null && \
     apt-get install -y git zip unzip
+
+RUN apt-get update > /dev/null
+RUN apt-get install -y git libzip-dev nodejs python2 libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+RUN docker-php-ext-install zip
+RUN docker-php-ext-enable zip
 
 RUN git clone https://github.com/ahaenggli/filegator.git && \
     cd filegator && \
@@ -14,85 +25,66 @@ RUN git clone https://github.com/ahaenggli/filegator.git && \
 
 WORKDIR /var/www/filegator
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN composer install --ignore-platform-reqs
-
-FROM node:14-buster AS npmbuild
-RUN mkdir -p /app/filegator
-WORKDIR /app/filegator
-
-COPY --from=composerbuild /var/www/filegator /app/filegator 
-
-RUN apt-get update && apt-get upgrade -y && apt-get install -y python2
-RUN apt-get install -y curl git wget unzip zip
-
+RUN composer install
+RUN composer require league/flysystem-sftp:^1.0 -W
+RUN composer require league/flysystem-aws-s3-v3:^1.0 -W
 RUN npm install
-RUN npm update  & npm audit fix
 
 RUN apt-get install -y dos2unix 
-
-
-
 # COPY ./filegator/frontend /app/filegator/frontend
 # COPY ./filegator/.eslintrc.js /app/filegator/.eslintrc.js
 
 RUN find . -type f -name '*.vue' -exec dos2unix {} +
 RUN find . -type f -name '*.js' -exec dos2unix {} +
-# RUN find . -type f -name '*.js'  -exec sed -i 's/\r\n$/\n$/' {} +
 
-RUN npm run build --fix
-RUN npm run build --fix
 
-# re install as production, so less packages are downloaded
-ENV NODE_ENV="production"
-RUN rm -rf node_modules package-lock.json && npm install && npm audit fix
+RUN npm run build
+RUN vendor/bin/phpunit
+RUN npm run lint
+#RUN npm run test:e2e
+RUN rm -rf node_modules frontend tests docs .git .github
+RUN rm README.md couscous.yml repository/.gitignore babel.config.js cypress* .env* .eslint* .gitignore jest.* .php_cs* phpunit* postcss* vue*
 
 
 ######## hier ############
-FROM php:8-fpm-alpine
+FROM php:8.3-fpm-alpine
 
-RUN apk update && apk upgrade
+# Runtime / build dependencies
+RUN apk add --no-cache \
+        lighttpd \
+        libzip-dev \
+        openldap-dev \
+        sqlite-dev \
+        php-sqlite3
 
-RUN apk --update \
-    add lighttpd && \
-    rm -rf /var/cache/apk/*
+# PHP extensions
+RUN docker-php-ext-install zip
+RUN docker-php-ext-install ldap
+RUN docker-php-ext-install posix
+RUN docker-php-ext-install opcache
+RUN docker-php-ext-install pdo_sqlite
 
-RUN apk add --no-cache libzip-dev ldb-dev libldap openldap-dev   
-RUN docker-php-ext-install zip \
-    && docker-php-ext-install ldap \
-    && docker-php-ext-install session 
-RUN apk add --no-cache php-sqlite3 
-RUN docker-php-ext-install posix 
-RUN docker-php-ext-enable zip \
-    && docker-php-ext-enable ldap \
-    && docker-php-ext-enable session 
-
-RUN apk add --no-cache php-opcache 
-
-# Use the default production configuration
+# Production PHP configuration
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
-RUN echo "cgi.fix_pathinfo=1" >> "$PHP_INI_DIR/php.ini"
 
-RUN echo "zend_extension=opcache.so" >> "$PHP_INI_DIR/php.ini"
-RUN echo "opcache.enable=1" >> "$PHP_INI_DIR/php.ini"
-RUN echo "opcache.memory_consumption=128" >> "$PHP_INI_DIR/php.ini"
-RUN echo "opcache.interned_strings_buffer=8" >> "$PHP_INI_DIR/php.ini"
-RUN echo "opcache.max_accelerated_files=4000" >> "$PHP_INI_DIR/php.ini"
-RUN echo "opcache.revalidate_freq=60" >> "$PHP_INI_DIR/php.ini"
-RUN echo "opcache.fast_shutdown=1" >> "$PHP_INI_DIR/php.ini"
-RUN echo "opcache.enable_cli=1" >> "$PHP_INI_DIR/php.ini"
+RUN { \
+        echo "cgi.fix_pathinfo=1"; \
+        echo "opcache.enable=1"; \
+        echo "opcache.memory_consumption=128"; \
+        echo "opcache.interned_strings_buffer=8"; \
+        echo "opcache.max_accelerated_files=4000"; \
+        echo "opcache.revalidate_freq=60"; \
+        echo "opcache.enable_cli=1"; \
+    } >> "$PHP_INI_DIR/php.ini"
 
+RUN sed -i 's/^max_file_uploads = .*/max_file_uploads = 100/' "$PHP_INI_DIR/php.ini" \
+    && sed -i 's/^memory_limit = .*/memory_limit = 1512M/' "$PHP_INI_DIR/php.ini" \
+    && sed -i 's/^post_max_size = .*/post_max_size = 1500M/' "$PHP_INI_DIR/php.ini" \
+    && sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 1500M/' "$PHP_INI_DIR/php.ini" \
+    && sed -i 's/^max_execution_time = .*/max_execution_time = 3600/' "$PHP_INI_DIR/php.ini" \
+    && sed -i 's/^max_input_time = .*/max_input_time = 300/' "$PHP_INI_DIR/php.ini"
 
-RUN sed -i 's/^max_file_uploads = .*/max_file_uploads = 100/' $PHP_INI_DIR/php.ini
-RUN sed -i 's/^memory_limit = .*/memory_limit = 1512M/' $PHP_INI_DIR/php.ini
-RUN sed -i 's/^post_max_size = .*/post_max_size = 1500M/' $PHP_INI_DIR/php.ini
-RUN sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 1500M/' $PHP_INI_DIR/php.ini
-RUN sed -i 's/^max_execution_time = .*/max_execution_time = 3600/' $PHP_INI_DIR/php.ini
-RUN sed -i 's/^max_input_time = .*/max_input_time = 300/' $PHP_INI_DIR/php.ini
-#RUN mkdir /var/run/lighttpd
-#RUN touch /var/run/lighttpd/php-fastcgi.socket
-#RUN chown -R lighttpd:lighttpd /var/run/lighttpd
-
+# PHP-FPM pool
 RUN set -eux; \
     { \
         echo '[www]'; \
@@ -102,16 +94,18 @@ RUN set -eux; \
         echo 'pm.max_spare_servers = 6'; \
     } | tee "/usr/local/etc/php-fpm.d/zzz-pm.conf"
 
-#ADD 15-fastcgi-php.conf /etc/lighttpd/conf-available/15-fastcgi-php.conf
-COPY --from=npmbuild /app/filegator /var/www/filegator
+# Application
+COPY --from=builder /var/www/filegator /var/www/filegator
 
-ADD lighttpd.conf /etc/lighttpd/lighttpd.conf
+COPY lighttpd.conf /etc/lighttpd/lighttpd.conf
+COPY mime-types.conf /etc/lighttpd/mime-types.conf
+COPY mod_fastcgi_fpm.conf /etc/lighttpd/mod_fastcgi_fpm.conf
+COPY mod_fastcgi.conf /etc/lighttpd/mod_fastcgi.conf
+COPY mod_cgi.conf /etc/lighttpd/mod_cgi.conf
 
-RUN mkdir -p /run/lighttpd/ && \
-    chown www-data. /run/lighttpd/ && \ 
-    chown -R www-data. /var/www/
 
-RUN mkdir -p /var/log/lighttpd/ 
+RUN mkdir -p /run/lighttpd /var/log/lighttpd \
+    && chown -R www-data:www-data /run/lighttpd /var/www/
 
 EXPOSE 80
 

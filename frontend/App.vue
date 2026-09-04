@@ -29,5 +29,5 @@ export default {
 @import "assets/scss/custom";
 
 /* Dark Theme */
-@import "assets/scss/theme/dark";
+// @import "assets/scss/theme/dark";
 </style>

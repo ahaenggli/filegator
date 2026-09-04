@@ -115,4 +115,4 @@ VOLUME /var/www/filegator/configuration.php
 
 CMD php-fpm -D && lighttpd -D -f /etc/lighttpd/lighttpd.conf
 
-### docker build -t ahaen/filegator-test:dev-l .
+### podman build -t docker.io/ahaen/filegator-test:dev .

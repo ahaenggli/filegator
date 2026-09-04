@@ -100,11 +100,11 @@
               </a>
             </b-table-column>
 
-            <b-table-column v-if="can(['write', 'chmod'])" :label="lang('Permissions')" field="data.permissions" sortable width="130">
+            <!-- <b-table-column v-if="can(['write', 'chmod'])" :label="lang('Permissions')" field="data.permissions" sortable width="130">
             <span @click="togglePermissionsView" :title="showSymbolic ? lang('Hide symbolic format') : lang('Show symbolic format')" style="font-family: monospace;cursor: pointer;">
               {{ formatPermissions(props.row.permissions, props.row.type) }}
             </span>
-            </b-table-column>
+            </b-table-column> -->
 
             <b-table-column :label="lang('Size')" :custom-sort="sortBySize" field="data.size" sortable numeric width="150">
               {{ props.row.type == 'back' || props.row.type == 'dir' ? lang('Folder') : formatBytes(props.row.size) }}

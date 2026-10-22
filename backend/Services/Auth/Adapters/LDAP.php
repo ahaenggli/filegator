@@ -22,10 +22,14 @@ use Monolog\Logger;
  */
 class LDAP implements Service, AuthInterface
 {
-    const SESSION_KEY = 'LDAP_auth';
-    const GUEST_USERNAME = 'guest';
+    public const SESSION_KEY = 'LDAP_auth';
+    public const SESSION_HASH = 'LDAP_auth_hash';
+    public const SESSION_LOOKUP = 'LDAP_auth_lookup';
+    public const GUEST_USERNAME = 'guest';
 
     protected $session;
+
+    protected $resolved_user;
     protected $private_repos = false;
     protected $ldap_server;
     protected $ldap_bindDN;
@@ -44,11 +48,13 @@ class LDAP implements Service, AuthInterface
 
     public function init(array $config = [])
     {
-        if (!isset($config['ldap_server']) || empty($config['ldap_server']))
+        if (!isset($config['ldap_server']) || empty($config['ldap_server'])) {
             throw new \Exception('config ldap_server missing');
+        }
 
-        if (!extension_loaded('ldap'))
+        if (!extension_loaded('ldap')) {
             throw new \Exception('ldap extension missing');
+        }
 
         if ($connect = ldap_connect($config['ldap_server'])) {
             @ldap_set_option($connect, LDAP_OPT_PROTOCOL_VERSION, 3);
@@ -60,7 +66,7 @@ class LDAP implements Service, AuthInterface
             $this->ldap_bindPass = $config['ldap_bindPass'];
             $this->ldap_baseDN = $config['ldap_baseDN'];
             $this->ldap_filter = $config['ldap_filter'];
-            $this->ldap_attributes = isset($config['ldap_attributes']) ? $config['ldap_attributes'] : ['*'];
+            $this->ldap_attributes = $config['ldap_attributes'] ?? ['*'];
             $this->ldap_userFieldMapping = $config['ldap_userFieldMapping'];
         } else {
             @ldap_close($connect);
@@ -72,23 +78,65 @@ class LDAP implements Service, AuthInterface
 
     public function user(): ?User
     {
-        return $this->session ? $this->session->get(self::SESSION_KEY, null) : null;
+        if (! $this->session) {
+            return null;
+        }
+
+        // revalidation hits the directory, and both the Router and the resolved
+        // controller ask for the user within the same request; resolve once
+        if ($this->resolved_user !== null) {
+            return $this->resolved_user ?: null;
+        }
+
+        $user = $this->session->get(self::SESSION_KEY, null);
+        $hash = $this->session->get(self::SESSION_HASH, null);
+
+        if (! $user) {
+            return null;
+        }
+
+        // re-read the account from the directory on every request so that a
+        // disabled or downgraded LDAP user does not keep a stale session,
+        // mirroring the Database and JsonFile adapters. Replay the exact search
+        // key used at login (SESSION_LOOKUP) so AddDomain/RemoveDomains setups
+        // resolve to the same directory entry.
+        $lookup = $this->session->get(self::SESSION_LOOKUP, $user->getUsername());
+
+        try {
+            foreach ($this->getUsers($lookup) as $u) {
+                if (strtolower($u['username']) == strtolower($user->getUsername())
+                    && $hash === $this->userHash($u)) {
+                    return $this->resolved_user = $user;
+                }
+            }
+        } catch (\Exception $e) {
+            // a transient directory outage is not an authorization decision;
+            // keep the existing session rather than logging everyone out or 500
+            $this->logger->log('LDAP revalidation failed: '.$e->getMessage(), Logger::WARNING);
+            return $this->resolved_user = $user;
+        }
+
+        $this->resolved_user = false;
+        return null;
     }
 
     public function authenticate($username, $password): bool
     {
         // prevent anonymous binding
-        if (!isset($password) || empty($password))
+        if (!isset($password) || empty($password)) {
             return false;
-        if (!isset($username) || empty($username))
+        }
+        if (!isset($username) || empty($username)) {
             return false;
+        }
 
         // remove (optional) domains from the username
         if (!empty($this->ldap_userFieldMapping['username_RemoveDomains']) && is_array($this->ldap_userFieldMapping['username_RemoveDomains'])) {
             $username = str_replace($this->ldap_userFieldMapping['username_RemoveDomains'], '', $username);
         }
 
-        $all_users = $this->getUsers($username);
+        $search_username = $username;
+        $all_users = $this->getUsers($search_username);
 
         // add the domain to the username
         if (!empty($this->ldap_userFieldMapping['username_AddDomain'])) {
@@ -101,6 +149,11 @@ class LDAP implements Service, AuthInterface
             if (strtolower($u['username']) == strtolower($username) && $this->verifyPassword($u['userDN'], $password)) {
                 $user = $this->mapToUserObject($u);
                 $this->store($user);
+                $this->session->set(self::SESSION_HASH, $this->userHash($u));
+                $this->session->set(self::SESSION_LOOKUP, $search_username);
+                // regenerate the session id on login to prevent session fixation,
+                // mirroring the Database and JsonFile adapters
+                $this->session->migrate(true);
                 return true;
             }
         }
@@ -110,11 +163,15 @@ class LDAP implements Service, AuthInterface
 
     public function forget()
     {
+        $this->resolved_user = null;
+
         return $this->session->invalidate();
     }
 
     public function store(User $user)
     {
+        $this->resolved_user = null;
+
         return $this->session->set(self::SESSION_KEY, $user);
     }
 
@@ -186,14 +243,16 @@ class LDAP implements Service, AuthInterface
     protected function getUsers(string $username = null): array
     {
         $ldapConn = @ldap_connect($this->ldap_server);
-        if (!$ldapConn)
+        if (!$ldapConn) {
             throw new \Exception('Cannot Connect to LDAP server');
+        }
         @ldap_set_option($ldapConn, LDAP_OPT_PROTOCOL_VERSION, 3);
         @ldap_set_option($ldapConn, LDAP_OPT_REFERRALS, 0);
 
         $ldapBind = @ldap_bind($ldapConn, $this->ldap_bindDN, $this->ldap_bindPass);
-        if (!$ldapBind)
+        if (!$ldapBind) {
             throw new \Exception('Cannot Bind to LDAP server: Wrong credentials?');
+        }
 
         // search the LDAP server for users
         $filter = $this->ldap_filter;
@@ -237,13 +296,15 @@ class LDAP implements Service, AuthInterface
                 $user['userDN'] = $ldapResults[$item][$this->ldap_userFieldMapping['userDN']];
 
                 if (!empty($this->ldap_userFieldMapping['username_AddDomain'])) {
-                    if (strpos($user['username'], $this->ldap_userFieldMapping['username_AddDomain']) === false)
+                    if (strpos($user['username'], $this->ldap_userFieldMapping['username_AddDomain']) === false) {
                         $user['username'] .= $this->ldap_userFieldMapping['username_AddDomain'];
+                    }
                 }
 
                 if (is_array($this->ldap_userFieldMapping['admin_usernames'])) {
-                    if (in_array($user['username'], $this->ldap_userFieldMapping['admin_usernames']))
+                    if (in_array($user['username'], $this->ldap_userFieldMapping['admin_usernames'])) {
                         $user['role'] = 'admin';
+                    }
                 }
 
                 // private repositories for each user?
@@ -257,20 +318,31 @@ class LDAP implements Service, AuthInterface
                     $user['permissions'] = 'read|write|upload|download|batchdownload|zip|chmod';
                 }
 
-                if (is_array($user) && !empty($user))
+                if (is_array($user) && !empty($user)) {
                     $users[] = $user;
+                }
             }
         }
         // print_r($users); // uncomment this line to see all available ldap-login-users
         return is_array($users) ? $users : [];
     }
 
-    private function verifyPassword($auth_user, $password)
+    // signature of the security-relevant account fields, compared on each
+    // request to invalidate a session whose LDAP account was changed; plain
+    // concatenation mirrors the Database and JsonFile adapters
+    private function userHash(array $u): string
     {
-        if (!isset($this->ldap_server) || empty($this->ldap_server))
+        return ($u['role'] ?? '').($u['homedir'] ?? '').($u['permissions'] ?? '');
+    }
+
+    protected function verifyPassword($auth_user, $password)
+    {
+        if (!isset($this->ldap_server) || empty($this->ldap_server)) {
             return false;
-        if (!extension_loaded('ldap'))
+        }
+        if (!extension_loaded('ldap')) {
             return false;
+        }
         $connect = @ldap_connect($this->ldap_server);
         if ($connect) {
             ldap_set_option($connect, LDAP_OPT_PROTOCOL_VERSION, 3);

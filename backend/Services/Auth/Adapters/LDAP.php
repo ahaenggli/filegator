@@ -22,10 +22,10 @@ use Monolog\Logger;
  */
 class LDAP implements Service, AuthInterface
 {
-    public const SESSION_KEY = 'LDAP_auth';
-    public const SESSION_HASH = 'LDAP_auth_hash';
-    public const SESSION_LOOKUP = 'LDAP_auth_lookup';
-    public const GUEST_USERNAME = 'guest';
+    const SESSION_KEY = 'LDAP_auth';
+    const SESSION_HASH = 'LDAP_auth_hash';
+    const SESSION_LOOKUP = 'LDAP_auth_lookup';
+    const GUEST_USERNAME = 'guest';
 
     protected $session;
 
@@ -78,7 +78,8 @@ class LDAP implements Service, AuthInterface
 
     public function user(): ?User
     {
-        if (! $this->session) {
+
+        if (!$this->session) {
             return null;
         }
 
@@ -91,7 +92,7 @@ class LDAP implements Service, AuthInterface
         $user = $this->session->get(self::SESSION_KEY, null);
         $hash = $this->session->get(self::SESSION_HASH, null);
 
-        if (! $user) {
+        if (!$user) {
             return null;
         }
 
@@ -104,15 +105,18 @@ class LDAP implements Service, AuthInterface
 
         try {
             foreach ($this->getUsers($lookup) as $u) {
-                if (strtolower($u['username']) == strtolower($user->getUsername())
-                    && $hash === $this->userHash($u)) {
+
+                if (
+                    strtolower($u['username']) == strtolower($user->getUsername())
+                    && $hash === $this->userHash($u)
+                ) {
                     return $this->resolved_user = $user;
                 }
             }
         } catch (\Exception $e) {
             // a transient directory outage is not an authorization decision;
             // keep the existing session rather than logging everyone out or 500
-            $this->logger->log('LDAP revalidation failed: '.$e->getMessage(), Logger::WARNING);
+            $this->logger->log('LDAP revalidation failed: ' . $e->getMessage(), Logger::WARNING);
             return $this->resolved_user = $user;
         }
 
@@ -332,7 +336,7 @@ class LDAP implements Service, AuthInterface
     // concatenation mirrors the Database and JsonFile adapters
     private function userHash(array $u): string
     {
-        return ($u['role'] ?? '').($u['homedir'] ?? '').($u['permissions'] ?? '');
+        return ($u['role'] ?? '') . ($u['homedir'] ?? '') . ($u['permissions'] ?? '');
     }
 
     protected function verifyPassword($auth_user, $password)

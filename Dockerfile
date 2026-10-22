@@ -1,12 +1,18 @@
 #################################
 # stage builder: build and test
 #################################
-FROM php:8.3-apache-bullseye AS builder
+FROM php:8.3-apache AS builder
+
+
+RUN apt-get update > /dev/null
+RUN apt-get install -y curl ca-certificates gnupg 
 
 RUN curl -sL https://deb.nodesource.com/setup_22.x | bash -
 
-RUN apt-get update > /dev/null
-RUN apt-get install -y git libzip-dev nodejs python2 libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+RUN apt-get install -y git libzip-dev nodejs
+
+# this is needed for end-to-end tests
+# RUN apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -25,12 +31,12 @@ RUN vendor/bin/phpunit
 RUN npm run lint
 #RUN npm run test:e2e
 RUN rm -rf node_modules frontend tests docs .git .github
-RUN rm README.md couscous.yml repository/.gitignore babel.config.js cypress* .env* .eslint* .gitignore jest.* .php_cs* phpunit* postcss* vue*
+RUN rm -f README.md couscous.yml repository/.gitignore babel.config.js cypress* .env* .eslint* .gitignore jest.* .php-cs* phpunit* postcss* vue*
 
 #################################
 # stage production
 #################################
-FROM php:8.3-apache-bullseye
+FROM php:8.3-apache
 
 RUN apt-get update > /dev/null
 RUN apt-get install -y git libzip-dev libldap2-dev

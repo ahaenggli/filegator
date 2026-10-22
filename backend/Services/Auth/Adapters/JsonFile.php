@@ -21,10 +21,10 @@ class JsonFile implements Service, AuthInterface
 {
     use PasswordHash;
 
-    const SESSION_KEY = 'json_auth';
-    const SESSION_HASH = 'json_auth_hash';
+    public const SESSION_KEY = 'json_auth';
+    public const SESSION_HASH = 'json_auth_hash';
 
-    const GUEST_USERNAME = 'guest';
+    public const GUEST_USERNAME = 'guest';
 
     protected $session;
 
@@ -38,7 +38,7 @@ class JsonFile implements Service, AuthInterface
     public function init(array $config = [])
     {
         if (! file_exists($config['file'])) {
-            copy($config['file'].'.blank', $config['file']);
+            copy($config['file'] . '.blank', $config['file']);
         }
 
         $this->file = $config['file'];
@@ -46,14 +46,16 @@ class JsonFile implements Service, AuthInterface
 
     public function user(): ?User
     {
-        if (! $this->session) return null;
+        if (! $this->session) {
+            return null;
+        }
 
         $user = $this->session->get(self::SESSION_KEY, null);
         $hash = $this->session->get(self::SESSION_HASH, null);
 
         if ($user) {
             foreach ($this->getUsers() as $u) {
-                if ($u['username'] == $user->getUsername() && $hash == $u['password'].$u['permissions'].$u['homedir'].$u['role']) {
+                if (is_string($u['username']) && $u['username'] === $user->getUsername() && $hash == $u['password'] . $u['permissions'] . $u['homedir'] . $u['role']) {
                     return $user;
                 }
             }
@@ -67,10 +69,10 @@ class JsonFile implements Service, AuthInterface
         $all_users = $this->getUsers();
 
         foreach ($all_users as &$u) {
-            if ($u['username'] == $username && $this->verifyPassword($password, $u['password'])) {
+            if (is_string($u['username']) && $u['username'] === $username && $this->verifyPassword($password, $u['password'])) {
                 $user = $this->mapToUserObject($u);
                 $this->store($user);
-                $this->session->set(self::SESSION_HASH, $u['password'].$u['permissions'].$u['homedir'].$u['role']);
+                $this->session->set(self::SESSION_HASH, $u['password'] . $u['permissions'] . $u['homedir'] . $u['role']);
                 $this->session->migrate(true);
 
                 return true;

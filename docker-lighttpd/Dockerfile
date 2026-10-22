@@ -1,4 +1,4 @@
-FROM php:8.3-apache-bullseye AS builder
+FROM php:8.3-apache-bookworm AS builder
 
 RUN mkdir -p /var/www
 WORKDIR /var/www
@@ -10,7 +10,7 @@ RUN apt-get update > /dev/null && \
     apt-get install -y git zip unzip
 
 RUN apt-get update > /dev/null
-RUN apt-get install -y git libzip-dev nodejs python2 libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+RUN apt-get install -y git libzip-dev nodejs python3 libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -43,8 +43,7 @@ RUN vendor/bin/phpunit
 RUN npm run lint
 #RUN npm run test:e2e
 RUN rm -rf node_modules frontend tests docs .git .github
-RUN rm README.md couscous.yml repository/.gitignore babel.config.js cypress* .env* .eslint* .gitignore jest.* .php_cs* phpunit* postcss* vue*
-
+RUN rm -f README.md couscous.yml repository/.gitignore babel.config.js cypress* .env* .eslint* .gitignore jest.* .php-cs* phpunit* postcss* vue*
 
 ######## hier ############
 FROM php:8.3-fpm-alpine
